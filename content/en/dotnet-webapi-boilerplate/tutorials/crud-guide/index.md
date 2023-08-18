@@ -14,5 +14,52 @@ menu:
 weight: 12
 toc: true
 ---
+# Performing CRUD Operations with fullstackhero's Web API
+## Add data models
+```Model
+namespace FSH.Starter.Domain.Catalog
+{
+    public enum CustomerType
+    {
+        Retail,
+        Wholesale
+    }
+    public class Customer : AuditableEntity, IAggregateRoot
+    {
+        public string Name { get; set; } = default!;
+        public CustomerType CustomerType { get; set; }
+        public decimal CreditLimit { get; set; }
+        public DateTime CustomerSince { get; set; }
+    }
+}
+```
+## Add to a database context
+```DbSet
+public DbSet<Customer> Customers => Set<Customer>();
+```
+## Create an entity
+Next in the handler inject the IRepositoryWithEvents or IRepositor interfaces
 
-Documentation Coming Soon!
+```Handler
+    public class CreateCustomerRequestHandler : IRequestHandler<CreateCustomerRequest, Guid>
+    {
+        private readonly IRepositoryWithEvents<Customer> _repository;
+        public CreateCustomerRequestHandler(IRepositoryWithEvents<Customer> repository)
+        {
+            this._repository = repository;
+        }
+
+        public async Task<DefaultIdType> Handle(CreateCustomerRequest request, CancellationToken cancellationToken)
+        {
+            // Map to customer using mapster
+            var customer = request.Adapt<Customer>();
+
+            // add to a repository
+            await _repository.AddAsync(customer, cancellationToken);
+
+            // return the id
+            return customer.Id;
+        }
+      }
+```
+
